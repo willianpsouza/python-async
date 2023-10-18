@@ -59,42 +59,57 @@ def data():
     }
 
 
-def stdConnection():
+def std_connection():
+    '''dbconnection base'''
     dbserver = os.getenv('DBHOST', '192.168.124.28')
-    dbname = 'postgres'
-    dbuser = 'postgres'
-    dbpass = 'meni4na6'
-
-    connstring = "dbname=%s user=%s password=%s host=%s" % (dbname, dbuser, dbpass, dbserver)
+    dbname = os.getenv('DBNAME', 'postgres')
+    dbuser = os.getenv('DBUSER', 'postgres')
+    dbpass = os.getenv('DBPASS', 'pgdb123')
+    connstring = f"dbname={dbname} user={dbuser} password={dbpass} host={dbserver}"
+    
     connection = psycopg.connect(connstring)
     return connection
 
 
-def stdConnectionPool():
+def std_connection_pool():
     '''connection pool'''
     dbserver = os.getenv('DBHOST', '192.168.124.28')
-    dbname = 'postgres'
-    dbuser = 'postgres'
-    dbpass = 'meni4na6'
-    connstring = "postgresql://%s:%s@%s/%s" %(dbuser, dbpass, dbserver, dbname)
-    pool = ConnectionPool(conninfo=connstring, min_size=8, max_size=64, max_idle=60, num_workers=8, open=True)
+    dbname = os.getenv('DBNAME', 'postgres')
+    dbuser = os.getenv('DBUSER', 'postgres')
+    dbpass = os.getenv('DBPASS', 'pgdb123')
+    connstring = f"postgresql://{dbuser}:{dbpass}@{dbserver}/{dbname}"
+    pool = ConnectionPool(
+        conninfo=connstring,
+        min_size=8,
+        max_size=64,
+        max_idle=60,
+        num_workers=8,
+        open=True
+    )
     return pool
 
 
-def stdConnectionAsyncPool():
-    '''connection pool'''
+def std_connection_async_pool():
+    '''connection pool with async'''
     dbserver = os.getenv('DBHOST', '192.168.124.28')
-    dbname = 'postgres'
-    dbuser = 'postgres'
-    dbpass = 'meni4na6'
-    connstring = "postgresql://%s:%s@%s/%s" % (dbuser, dbpass, dbserver, dbname)
-    pool = AsyncConnectionPool(conninfo=connstring, min_size=8, max_size=64, max_idle=60, num_workers=8, open=True)
+    dbname = os.getenv('DBNAME', 'postgres')
+    dbuser = os.getenv('DBUSER', 'postgres')
+    dbpass = os.getenv('DBPASS', 'pgdb123')
+    connstring = f"postgresql://{dbuser}:{dbpass}@{dbserver}/{dbname}"
+    pool = AsyncConnectionPool(
+        conninfo=connstring,
+        min_size=8,
+        max_size=64,
+        max_idle=60,
+        num_workers=8,
+        open=True
+    )
     return pool
 
 
 def sub_process_add_user(queue: Queue):
     '''connection pool with sub process'''
-    pool = stdConnectionPool()
+    pool = std_connection_pool()
     sql = "INSERT INTO public.user_info \
 (uif_id, uif_index, uif_gid, uif_isactive, uif_balance, uif_picture, uif_age, uif_name, uif_gender, uif_company, uif_email, uif_date_add) \
 VALUES(%s, %s, %s, %b, %s, %s, %s, %s, %s, %s, %s, CURRENT_TIMESTAMP);"
@@ -224,7 +239,7 @@ async def sent_to_queue(data):
 
 @asynccontextmanager
 async def dbConnection(app: FastAPI):
-    app.conn_async = stdConnectionAsyncPool()
+    app.conn_async = std_connection_async_pool()
     yield
     await app.conn_async.close()
 
